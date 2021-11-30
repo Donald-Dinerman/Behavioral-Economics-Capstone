@@ -1,0 +1,900 @@
+---
+title: "Capstone: Memory Group Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Load libraries
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(multcomp) #glht
+library(readxl)
+library(jtools) #summ
+library(kableExtra)
+library(gridExtra)
+```
+
+# Experimental Design
+
+**Industry Partners**
+
+Minnesota Wild & New York Islanders (NHL Teams)
+
+**Research Objective**
+
+Using a behaviorally-informed approach, increase season ticket renewals.
+
+**Behavioral Approach**
+
+*Issue*
+
+The emails sent out to season ticket holders are do not clearly convey the message that they should renew their tickets and the benefits are displayed sloppily in a matrix.
+
+*Solution*
+
+Modify the email format to concisely highlight the main message that season ticket holders should renew their tickets and to better showcase the benefits.
+
+**Control**
+
+Current Minnesota Wild email communications to season ticket holders.
+
+**Treatments**
+
+All treatments have the same concise messaging regarding season ticket renewals. The differences are how we design the benefits matrix.
+
+1. Ranking: Organize the benefits by their rankings according to subjects' preferences.
+
+2. Categorization: Create buckets relating the benefits (e.g., fan experience, merchandise, etc.) while maintaning the ranking system within each bucket.
+
+3. Reduced List: Display the 5 highest ranked benefits in a matrix. (behavioral economics literature suggest $7\pm2$ choices are optimal for memory recollection).
+
+# Pre-Test
+
+Survey our subject pool on MTurk about their preferences regarding season ticket benefits.
+
+Analysis of pre-test data is used to inform our ranking system for benefits in our treatments.
+
+## Benefit Ranking
+
+```{r}
+#load data
+df_pre_dummy = read.csv("Pretest_data.csv", skip = 1)
+
+df_pre = read.csv("Presurvey_nov3.csv", skip = 1)
+colnames(df_pre) = colnames(df_pre_dummy)
+```
+
+```{r}
+#prep data
+#colnames(df_pre)
+
+df_pre_1 = df_pre[-1, c(3, 18, 22:27, 32:42)]
+
+df_pre_2 = df_pre_1[,c(1:3, 9:19)]
+
+df_pre_3 = filter(df_pre_2, Response.Type != "Survey Preview" & Sports.Filter != "0" & MTurk.ID. != "test")
+
+df_pre_fin = df_pre_3 %>%
+  pivot_longer(cols = 4:last_col(), names_to = "benefit", values_to = "rank")
+
+df_pre_fin$rank = as.numeric(df_pre_fin$rank) #change class: ch to dbl
+
+df_pre_fin$benefit = gsub("\\.", " ", df_pre_fin$benefit) #replace . with space
+```
+
+Multiple ways to categorize/rank the pre-test benefits
+
+*Settled on using top 5 ranking
+
+```{r}
+#Mean ranking
+df_pre_fin %>%
+  group_by(benefit) %>%
+  summarise(mean_count = round(mean(rank), 2)) %>%
+  arrange(-mean_count) %>%
+  mutate(ranking = 1:nrow(.))
+
+#Median ranking
+df_pre_fin %>%
+  group_by(benefit) %>%
+  summarise(median_count = round(median(rank), 2)) %>%
+  arrange(-median_count) %>%
+  mutate(ranking = 1:nrow(.))
+
+#Top 3 ranking count
+#Number of times a benefit is listed as someones top 3
+df_pre_fin$top_three = ifelse(df_pre_fin$rank <= 3, 1, 0)
+
+df_pre_fin %>%
+  group_by(benefit) %>%
+  summarise(top_three_count = sum(top_three)) %>%
+  arrange(-top_three_count) %>%
+  mutate(ranking = 1:nrow(.))
+
+#Top 5 ranking count
+#Number of times a benefit is listed as someones top 5
+df_pre_fin$top_five = ifelse(df_pre_fin$rank <= 5, 1, 0)
+
+df_pre_fin %>%
+  group_by(benefit) %>%
+  summarise(top_five_count = sum(top_five)) %>%
+  arrange(-top_five_count) %>%
+  mutate(ranking = 1:nrow(.))
+```
+
+# Experiment
+
+## Data Prep
+
+```{r}
+#load data
+df = read.csv("Memory Project_November 1, 2021_10.46.csv", header = T)
+df = read.csv("Memory Project_November 11, 2021_16.19.csv", header = T) #Prelim Data
+
+df = read.csv("Memory Project_November 11, 2021_16.19_buffer_count.csv", header = T)
+#colnames(df)
+#head(df)
+```
+
+```{r}
+#Remove first two rows
+df_rem2 = df[-c(1:2),]
+
+#filter based off of std criteria: actual respondents, sports filter, attention check
+
+df_1 = filter(df_rem2, Status == "IP Address", MTurkID != "test", Sports_Filter != "0", attention_check_1 == "Other", 
+              attention_check_2_1 == "70", attention_check_2_2 == "50")
+
+#ch to dbl
+df_1 = transform(df_1,
+         Renewal.Liklihood_1 = as.numeric(Renewal.Liklihood_1), 
+         label = as.factor(label))
+```
+
+```{r}
+#change label names using case_when
+temp = df_1$label
+temp_unique = unique(temp)
+
+df_1$label = case_when(
+  temp == temp_unique[1] ~ "Reduced List",
+  temp == temp_unique[2] ~ str_to_title(temp_unique[2]),
+  temp == temp_unique[3] ~ str_to_title(temp_unique[3]),
+  temp == temp_unique[4] ~ str_to_title(temp_unique[4])
+)
+```
+
+```{r}
+#Add benefit retention memory (%) variable
+#Create list of benefits to find correct response proportion in data using grep
+#add the two new fake benefits
+
+benefit_list = c("4Ever Wild Rewards", "Discounted Wild Merchandise", "Interest Free Payment Plans", "Hockey Lodge Discount", 
+                 "Purchase Additional Tickets at a Discounted Rate", "Member Events", "Stadium Tours", "Dedicated Account Manager",
+                 "Playoff Access", "Right of First Refusal for Concerts and Events", "Options to Purchase Suites Using flex credit",
+                 "Same Seat Guarantee", "Ticket Trade- switch out games you can't attend", "Complimentary Parking", 
+                 "Gameday Travel Package", "Discounted Concessions", "Early Entry on Game Days", 
+                 "Exclusive Conferences Calls with Players, Managers, and Front Office Executives", 
+                 "Free Holiday Ornament", "Access to all streamed NHL Games", "Exclusive Restroom Access", "Autographed Merchandise")
+
+real_benefits = c("4Ever Wild Rewards", "Interest Free Payment Plans", "Hockey Lodge Discount", 
+                  "Purchase Additional Tickets at a Discounted Rate", "Member Events", "Dedicated Account Manager",
+                  "Playoff Access", "Right of First Refusal for Concerts and Events",
+                  "Same Seat Guarantee", "Ticket Trade- switch out games you can't attend", "Complimentary Parking")
+
+fake_benefits = benefit_list[!benefit_list %in% real_benefits]
+
+benefit_levels = c(real_benefits, fake_benefits)
+```
+
+```{r}
+# if a string contains " Managers" add "Exclusive Conferences Calls with Players, Managers, and Front Office Executives" to list
+# Remove "Exclusive Conferences Calls with Players", " Managers", " and Front Office Executives"
+
+do_all_func = function(vec){
+  
+  list_temp = strsplit(vec, ",") #extract elements
+
+  list_to_df = function(x){sapply(x, `length<-`, max(lengths(x))) %>% as.matrix() %>% as.data.frame()} #convert to df
+
+  df_list =  list_to_df(list_temp)
+
+  add_func = function(x){
+  
+    temp = " Managers" %in% x
+  
+    if(temp == T){
+      prod = append(x[temp], "Exclusive Conferences Calls with Players, Managers, and Front Office Executives")}
+    else{prod = x}
+    prod
+  }
+
+  add_list = apply(df_list, MARGIN = 2, FUN = add_func) %>% list_to_df()
+
+  #Removal
+
+  drop_vec = c("Exclusive Conferences Calls with Players", " Managers", " and Front Office Executives")
+
+  drop_func = function(x){
+  
+    x[x %in% drop_vec == F]
+  }
+
+  complete_list = apply(add_list, MARGIN = 2, FUN = drop_func) %>% list_to_df()
+  complete_list
+}
+
+df_retention = do_all_func(df_1$Initial_Retention)
+
+df_value = do_all_func(df_1$Valued_Retention)
+```
+
+```{r}
+#Create data frame with subject on x and words on y, with counts in the cells (1,0)
+
+binary_table = function(df){
+  
+  test = function(x){
+    xy = table(factor(x, levels = benefit_levels)) %>% data.frame()
+    colnames(xy) = c("benefits", "count")
+
+    pivot_wider(xy, names_from = benefits, values_from = count)
+  }
+
+  hold = NULL
+
+  for(i in 1:ncol(df)){
+    temp = test(df[,i])
+    hold = rbind(hold, temp)
+  }
+
+  hold
+}
+
+mat_retention = binary_table(df_retention)
+mat_value = binary_table(df_value)
+```
+
+```{r}
+#next step: create proportion of correct responses, proportion of total retention/value
+#can cbind label/treatment information post: cbind(df, label = df_1$label)
+#set the factor levels so that the first 11 match the first 11 real benefits and the remaining match the fake benefits (done)
+#add two false benefits: create a memory score --> +1 for correct answer, -1 for incorrect answer
+
+#false recall: # times F vs # T times
+#******FIX INDEXING****** if needed
+
+prep_rep_func = function(mat_retention){
+  
+n_attempts = apply(mat_retention, 1, sum) #sum across rows w binary entries to get total attempts
+
+mat_retention$T_num = apply(mat_retention[,1:11], 1, sum) #sum T across rows
+
+mat_retention$F_num = apply(mat_retention[,12:22], 1, sum) #sum F across rows
+
+mat_retention$memory_score = mat_retention$T_num - mat_retention$F_num #memory score
+
+mat_retention_fin = cbind(label = df_1$label, n_attempts, mat_retention)
+
+#add payment col: payment is +$0.05 for correct & -$0.05 for false (floor at zero)
+
+mat_retention_fin$user_payment = mat_retention_fin$memory_score * 0.05
+
+mat_retention_fin$user_payment = ifelse(mat_retention_fin$user_payment < 0, 0, mat_retention_fin$user_payment)
+
+#cbind renewal likelihood
+
+mat_retention_fin_pre = cbind(mat_retention_fin, Renewal.Liklihood_1 = df_1$Renewal.Liklihood_1, Gender = df_1$Gender)
+mat_retention_fin_pre
+}
+
+mat_retention_fin_pre = prep_rep_func(mat_retention)
+
+mat_value_fin_pre = prep_rep_func(mat_value)
+```
+
+```{r}
+#Timing var
+#last click vs page submit
+
+num_round = function(x){round(as.numeric(x), 2)}
+
+#make timing numeric
+df_1 = transform(df_1,
+          Control_time_First.Click = num_round(Control_time_First.Click),
+          Control_time_Last.Click = num_round(Control_time_Last.Click),
+          Control_time_Page.Submit = num_round(Control_time_Page.Submit),
+        
+          Reduced_time_First.Click = num_round(Reduced_time_First.Click),
+          Reduced_time_Last.Click = num_round(Reduced_time_Last.Click),
+          Reduced_time_Page.Submit = num_round(Reduced_time_Page.Submit),
+          
+          Ranking_time_First.Click = num_round(Ranking_time_First.Click),
+          Ranking_time_Last.Click = num_round(Ranking_time_Last.Click),
+          Ranking_time_Page.Submit = num_round(Ranking_time_Page.Submit),
+          
+          Categorization_time_First.Click = num_round(Categorization_time_First.Click),
+          Categorization_time_Last.Click = num_round(Categorization_time_Last.Click),
+          Categorization_time_Page.Submit = num_round(Categorization_time_Page.Submit),
+          
+          Buffer_time_First.Click = num_round(Buffer_time_First.Click),
+          Buffer_time_Last.Click = num_round(Buffer_time_Last.Click),
+          Buffer_time_Page.Submit = num_round(Buffer_time_Page.Submit),
+          
+          Buffer_list_time_First.Click = num_round(Buffer_list_time_First.Click),
+          Buffer_list_time_Last.Click = num_round(Buffer_list_time_Last.Click),
+          Buffer_list_time_Page.Submit = num_round(Buffer_list_time_Page.Submit))
+
+#Based on page submit
+xx = paste(df_1$Control_time_Page.Submit, df_1$Reduced_time_Page.Submit, df_1$Ranking_time_Page.Submit, 
+           df_1$Categorization_time_Page.Submit) %>%
+  data.frame()
+
+sub_NA = function(df){gsub("NA", "", df)}
+
+time_clean_func = function(mat_retention_fin_pre){
+  
+mat_retention_fin_pre$page_time = apply(xx, 1, sub_NA) %>% as.numeric()
+
+#Remove observations over 2 minutes (120 seconds) and under 3 seconds & add age variable
+
+mat_retention_fin_1 = mat_retention_fin_pre %>% mutate(age = as.numeric(df_1$Age), buffer_count = df_1$Count, .before = n_attempts) %>% 
+  filter(page_time >=3, page_time <= 120)
+
+mat_retention_fin_1
+}
+
+mat_retention_fin_1 = time_clean_func(mat_retention_fin_pre)
+
+mat_value_fin_1 = time_clean_func(mat_value_fin_pre)
+```
+
+```{r}
+#Create Age Buckets
+temp = mat_retention_fin_1$age
+age_bucket = ifelse(temp >= 18 & temp <= 34, "18-34",
+                    ifelse(temp >= 35 & temp <= 50, "35-50", "Older than 50"))
+
+mat_retention_fin_1 = mat_retention_fin_1 %>% mutate(age_bucket = as.factor(age_bucket), .after = age)
+```
+
+```{r}
+#proportion of correct responses over total buffer words
+#mutate proportion into mat_retention_fin_1
+n_buffer = 15 #number of buffer words
+mat_retention_fin_1$prop_buffer = mat_retention_fin_1$buffer_count/n_buffer
+
+#Group by buffer memory (median split)
+temp = mat_retention_fin_1$prop_buffer
+cutoff = median(temp)
+
+mat_retention_fin_1 = mutate(mat_retention_fin_1, buffer_group = ifelse(temp >= cutoff, 1, 0) %>% as.factor(), .after = buffer_count)
+```
+
+## EDA
+
+#### Condition size n
+
+```{r}
+mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(n_subjects = n())
+```
+
+### Memory
+
+Need to take proportion approach to account for limited choice set for the 'reduced list' treatment
+
+```{r}
+#False/True: Total, Proportion
+
+#new x: difference in proportions to control for diff in benefit options and n_attempts
+
+mat_retention_fin_1 = mat_retention_fin_1 %>%
+  mutate(prop_T = round(T_num/n_attempts, 3),
+         prop_F = round(F_num/n_attempts, 3),
+         prop_diff = prop_T-prop_F) 
+
+mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(True = mean(T_num),
+            False = mean(F_num)) %>% 
+  pivot_longer(cols = True:False,
+               names_to = "T_or_F",
+               values_to = "Total") %>%
+  ggplot(aes(x = label, y = Total, fill = T_or_F)) +
+  geom_col(col = "black", position = "dodge") +
+  labs(title = "Total Recollection", x = "Condition", y = "Recollection Total", fill = "True or False") +
+  guides(fill = guide_legend(reverse=TRUE))
+  
+mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(True = mean(prop_T),
+            False = mean(prop_F)) %>%
+  pivot_longer(cols = True:False,
+               names_to = "T_or_F",
+               values_to = "Total") %>%
+  ggplot(aes(x = label, y = Total, fill = T_or_F)) +
+  geom_col(position = "dodge", col = "black") +
+  labs(title = "Mean Recolection Proportion", x = "Condition", y = "Recolection Proportion (%)", fill = "True or False")  +
+  guides(fill = guide_legend(reverse=TRUE))
+```
+
+True recollection represents correct benefit recall and false recollection represents incorrect benefit recall.
+
+Participants in the reduced list had the greatest true recollection and the least false recollections (proportionally). Note that this finding is not statistically significant.
+
+Subjects are grouped whether they are above or below the median memory performance on the buffer activity
+
+Control for subjects with inherently good or bad memorization skills
+
+```{r}
+#color by buffer median and group by condition
+mat_retention_fin_1 %>%
+  group_by(label, buffer_group) %>%
+  summarise(mean_prop_T = mean(prop_T)) %>%
+  ggplot(aes(x = label, y = mean_prop_T, fill = buffer_group)) +
+  geom_col(col = "black", position = "dodge") +
+  labs(title = "Mean True Recolection Proportion", x = "Condition", y = "True Recolection Proportion (%)", fill = "Buffer Memory")
+
+mat_retention_fin_1 %>%
+  group_by(label, buffer_group) %>%
+  summarise(mean_prop_F = mean(prop_F)) %>%
+  ggplot(aes(x = label, y = mean_prop_F, fill = buffer_group)) +
+  geom_col(col = "black", position = "dodge") +
+  labs(title = "Mean False Recolection Proportion", x = "Condition", y = "False Recolection Proportion (%)", fill = "Buffer Memory")
+```
+
+Individuals performing above the median in the buffer test appear to have systemically higher true recollection than individuals performing above the median.
+
+Individuals performing below the median in the buffer test appear to have systemically higher false recollection than individuals performing above the median.
+
+Note that both of these observations are separated by a narrow margin for subjects in the categorization condition.
+
+#### Timing
+
+Analysis of the amount of time subjects are spending looking at the emails.
+
+```{r}
+#bar chart of mean timing colored by treatment
+ggplot(mat_retention_fin_1, aes(x = page_time, col = label)) +
+  geom_density() +
+  labs(title = "Distribution of Time Spent on Screen Across Conditions", x = "Screen Time (Seconds)", col = "Condition", y = "Density")
+
+
+position = mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(mean_time = mean(page_time)) %>%
+  arrange(mean_time) %>%
+  pull(1)
+
+mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(mean_time = mean(page_time),
+            sd = sd(page_time, na.rm = T),
+            se = sd / sqrt(n()),
+            alpha = 0.05,
+            t = qt((1-alpha)/2 + .5, n()-1),   # tend to 1.96 if sample size is big enough
+            CI = t*se) %>%
+  ggplot(aes(x = label, y = mean_time)) +
+  geom_col(fill = "steelblue", col = "black") +
+  geom_errorbar(aes(ymin = mean_time - CI, ymax= mean_time + CI), width = .2) +
+  scale_x_discrete(limits = position) +
+  coord_flip() +
+  labs(title = "Average Time Spent On Email Across Conditions", x = "Conditions", y = "Average Time (Seconds)",
+       subtitle = "Error bars represent 95% confidence interval")
+
+mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(median_time = median(page_time),
+            sd =  sd(page_time, na.rm = T),
+            se = sd / sqrt(n()),
+            alpha = 0.05,
+            t = qt((1-alpha)/2 + .5, n()-1), # tend to 1.96 if sample size is big enough) %>%
+            CI = t*se) %>%
+  ggplot(aes(x = label, y = median_time)) +
+  geom_col(fill = "steelblue", col = "black") +
+  geom_errorbar(aes(ymin = median_time - CI, ymax= median_time + CI), width = .2) +
+  scale_x_discrete(limits = position) +
+  coord_flip() +
+  labs(title = "Median Time Spent On Email Across Conditions", x = "Conditions", y = "Median Time (Seconds)",
+       subtitle = "Error bars represent 95% confidence interval")
+
+position = mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(median_time = median(page_time)) %>%
+  arrange(-median_time) %>%
+  pull(1)
+
+ggplot(mat_retention_fin_1) +
+  geom_boxplot(aes(x = label, y = page_time), col = "black", fill = "steelblue", alpha = 0.3) +
+  scale_x_discrete(limits = position) +
+  labs(title = "Boxplot of Screen Times Across Conditions", x = "Condition", y = "Average Time (Seconds)")
+```
+
+Screen time is not significantly different among the treatments and control but the reduced list email condition has the lowest average time spent on screen. This does not come as a surprise considering it contains 6 fewer benefits than the other conditions.
+
+Also the control appears to have the highest screen time which may be attributed to its lack of clarity in displaying the benefits and its bulky text requesting season ticket renewals.
+
+#### Memory Score
+
+Memory score is defined as the difference between correct and incorrect benefit recollection.
+
+```{r}
+#plot in func as list
+
+ms_plot_func = function(mat_retention_fin_1){
+  
+p1 = ggplot(mat_retention_fin_1, aes(x = memory_score, col = label)) +
+  geom_density() +
+  labs(title = "Distribution of Memory Retention Across Conditions", x = "Memory Score", col = "Condition", y = "Density")
+
+#determine factor positioning
+positions = mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(mean_memory = mean(memory_score)) %>%
+  arrange(-mean_memory) %>%
+  pull(1)
+
+#bar chart of memory score grouped by treatment
+p2 = mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(mean_memory = mean(memory_score),
+            sd = sd(memory_score, na.rm = T),
+            se = sd / sqrt(n()),
+            alpha = 0.05,
+            t = qt((1-alpha)/2 + .5, n()-1), # tend to 1.96 if sample size is big enough) %>%
+            CI = t*se) %>%
+  ggplot(aes(x = label, y = mean_memory)) +
+  geom_col(fill = "steelblue", col = "black") +
+  geom_errorbar(aes(ymin = mean_memory - CI, ymax= mean_memory + CI), width = .2) +
+  scale_x_discrete(limits = positions[length(positions):1]) + #reverse string
+  coord_flip() +
+  labs(title = "Average Memory Scores Across Conditions", x = "Condition", y = "Average Memory Score", 
+       subtitle = "Error bars represent 95% confidence interval")
+
+#boxplot of MS by condition
+p3 = ggplot(mat_retention_fin_1) +
+  geom_boxplot(aes(x = label, y = memory_score), col = "black", fill = "steelblue", alpha = 0.3) +
+  scale_x_discrete(limits = positions) +
+  labs(title = "Boxplot of Memory Scores Across Conditions", x = "Condition", y = "Average Memory Score")
+
+list(p1,p2,p3)
+}
+
+ms_plot_func(mat_retention_fin_1)
+```
+
+Across groups there is no significant difference in memory scores (not including the reduced list condition). 
+
+Note that the reduced list condition has a smaller memory score because it presents subjects with fewer benefits. This reduced choice set sets a smaller cap of their memory score relative to the other conditions.
+
+#### Renewal Likelihood
+
+```{r}
+#RL density plot colored by condition
+rl_plot_func = function(mat_retention_fin_1){
+  
+p1 = ggplot(mat_retention_fin_1, aes(x = (Renewal.Liklihood_1), col = label)) +
+  geom_density() +
+  labs(title = "Distribution of Renewal Liklihood Across Conditions", x = "Renewal Liklihood", y = "Density", col = "Conditions")
+
+#determine factor positioning
+positions = mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(mean_renewal = mean(Renewal.Liklihood_1)) %>%
+  arrange(-mean_renewal) %>%
+  pull(1)
+
+#bar chart of renewal likelihood grouped by treatment
+p2 = mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(mean_renewal = mean(Renewal.Liklihood_1),
+            sd = sd(Renewal.Liklihood_1, na.rm = T),
+            se = sd / sqrt(n()),
+            alpha = 0.05,
+            t = qt((1-alpha)/2 + .5, n()-1), # tend to 1.96 if sample size is big enough) %>%
+            CI = t*se) %>%
+  ggplot(aes(x = label, y = mean_renewal)) +
+  geom_col(fill = "steelblue", col = "black") +
+  geom_errorbar(aes(ymin = mean_renewal - CI, ymax = mean_renewal + CI), width = .2) +
+  scale_x_discrete(limits = positions[length(positions):1]) + #reverse string
+  coord_flip() +
+  labs(title = "Average Renewal Likelihoods Across Conditions", x = "Condition", y = "Average Renewal Likelihood (%)",
+       subtitle = "Error bars represent 95% confidence interval")
+
+#boxplot of RL by condition
+
+positions = mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(median_renewal = median(Renewal.Liklihood_1)) %>%
+  arrange(-median_renewal) %>%
+  pull(1)
+
+p3 = ggplot(mat_retention_fin_1) +
+  geom_boxplot(aes(x = label, y = Renewal.Liklihood_1), col = "black", fill = "steelblue", alpha = 0.3) +
+  scale_x_discrete(limits = positions) +
+  labs(title = "Boxplot of Renewal Likelihoods Across Conditions", x = "Condition", y = "Average Renewal Likelihood (%)")
+
+list(p1,p2,p3)
+
+}
+
+rl_plot_func(mat_retention_fin_1)
+```
+
+There is no statistically significant difference in renewal likelihoods across the conditions.
+
+```{r}
+#memory vs renewal likelihood
+#trying to visualize connection between memory score and renewal likelihood
+
+mat_retention_fin_1 %>%
+  group_by(h = as.factor(memory_score)) %>%
+  summarise(med_renewal = median(Renewal.Liklihood_1), count = n()) %>%
+  filter(., count >= 10) %>% #filter out small sample size
+  ggplot(aes(x = h, y = med_renewal)) + 
+  geom_col(col = "black", fill = "steelblue") + 
+  coord_cartesian(ylim = c(60, 80)) +
+  labs(title = "Median Renewal Likelihood Across Memory Scores", x = "Memory Score", y = "Median Renewal Likelihood (%)", 
+       subtitle = "Filtered for observations n >= 10")
+
+mat_retention_fin_1 %>%
+  group_by(h = as.factor(memory_score)) %>%
+  summarise(mean_renewal = mean(Renewal.Liklihood_1), count = n()) %>%
+  filter(., count >= 10) %>% #filter out small sample size
+  ggplot(aes(x = h, y = mean_renewal)) + 
+  geom_col(col = "black", fill = "steelblue") + 
+  coord_cartesian(ylim = c(60, 80)) + #zoom in
+  labs(title = "Mean Renewal Likelihood Across Memory Scores", x = "Memory Score", y = "Mean Renewal Likelihood (%)",
+       subtitle = "Filtered for observations n >= 10")
+
+ggplot(mat_retention_fin_1, aes(x = as.factor(memory_score), y = Renewal.Liklihood_1)) + 
+  geom_col(fill = "steelblue") + 
+  labs(title = "Cumulative Renewal Likelihood Across Memory Scores", x = "Memory Score", y = "Mean Renewal Likelihood (%)")
+
+ggplot(mat_retention_fin_1, aes(x = as.factor(memory_score))) +
+         geom_bar(fill = "steelblue", col = "black") +
+  labs(title = "Distribution of Memory Scores Across Ages", y = "Count", x = "Memory Score")
+
+
+```
+
+There may be a positive relationship between memory scores and renewal likelihoods that should be explored in the modeling section via regression analysis.
+
+```{r}
+#Age Buckets
+ggplot(mat_retention_fin_1, aes(x = as.factor(memory_score))) +
+         geom_bar(aes(fill = age_bucket), col = "black", position = "dodge") +
+  labs(title = "Distribution of Memory Scores Across Ages", y = "Count", x = "Memory Score", fill = "Age Buckets")
+
+ggplot(mat_retention_fin_1, aes(x = memory_score)) +
+         geom_density(aes(fill = age_bucket), alpha = 0.4) +
+  labs(title = "Distribution of Memory Scores Across Ages", y = "Density", x = "Memory Score", fill = "Age Buckets")
+
+n_scores = mat_retention_fin_1 %>%
+  group_by(memory_score) %>%
+  summarise(count = n()) %>%
+  filter(., count >= 10) %>%
+  pull(1)
+
+mat_retention_fin_1 %>% 
+  filter(., memory_score %in% n_scores) %>% #"WHERE col IN vec" like SQL, ~ iterated or statement
+  group_by(memory_score, age_bucket) %>%
+  summarise(mean_renewal = mean(Renewal.Liklihood_1),
+            count = n()) %>%
+  ggplot(aes(x = as.factor(memory_score), y = mean_renewal, fill = age_bucket)) +
+  geom_col(col = "black", position = "dodge") +
+  coord_cartesian(ylim = c(20, 85)) + #zoom in
+  labs(title = "Renewal Likelihood Across Memory Scores and Ages", y = "Average Renewal Likelihood (%)", 
+       x = "Memory Score", fill = "Age Buckets")
+```
+
+Older subjects (>50) appear to have a better memory score across all the conditions compared to other age groups.
+
+### Value
+
+Analysis of benefits that subjects remembered and value.
+
+Note: Our analysis, findings, and presentation mostly concerned benefit memory retention and its impact on season ticket renewals rather than valued benefits.
+
+```{r}
+#memory score
+ms_plot_func(mat_value_fin_1)
+```
+
+```{r}
+#renewal likelihood
+
+rl_plot_func(mat_value_fin_1)
+```
+
+
+## Statistical Tests
+
+#### ANOVA
+
+ANOVA: analysis mean likelihood of renewals across treatments, analysis benefit memory retention score groups
+
+##### Memory Score
+```{r}
+#Memory Score
+# Compute the analysis of variance; null: all mean are equal across groups
+#Should only compare != Reduced list groups for memory score
+
+mat_retention_fin_1$label  = as.factor(mat_retention_fin_1$label)
+
+mat_limited = mat_retention_fin_1 %>% filter(label != "Reduced List")
+
+res.aov = aov(memory_score ~ label, data = mat_limited)
+# Summary of the analysis
+summary(res.aov)
+
+# Check Assumptions
+
+#Equal Var: Failed
+par(mfrow = c(1,2))
+
+plot(res.aov,1) #can do boxplot instead
+bartlett.test(memory_score ~ label, data = mat_limited) #null: all populations variances are equal
+
+#Normality: Failed numerically but passes visually (iffy)
+plot(res.aov,2)
+shapiro.test(res.aov$residuals) #null is that data is normally dist
+
+
+#ANOVA w unequal variance: Welch's ANOVA
+oneway.test(memory_score ~ label,
+  data = mat_limited,
+  var.equal = F # assuming unequal variances
+)
+
+#Finding: Significant difference in memory score across groups
+```
+
+There is a violation of normality with the standard ANOVA testing. So we must conduct speciality ANOVA tests that don't require this condition.
+
+```{r}
+#Special Tests: Don't require normality but they do require equal var (homogeneity)
+
+# Tukey HSD test:
+post_test <- glht(res.aov,
+  linfct = mcp(label = "Tukey")
+)
+
+# Dunnett Test:
+mat_retention_fin_1$label  = relevel(mat_retention_fin_1$label, ref = "Control")
+
+res.aov.new = aov(memory_score ~ label, data = mat_retention_fin_1)
+
+post_test <- glht(res.aov.new,
+  linfct = mcp(label = "Dunnett")
+)
+
+summary(post_test)
+plot(post_test)
+```
+
+Specialty ANOVA tests suggest that there is a significant difference in memory scores between the control and reduced list. However, this finding is not meaningful considering that the reduced choice list in the treatment systemically reduces its memory score.
+
+##### Renewal Likelihood
+```{r}
+#Renewal likelihood
+
+#Issue there are outliers: is it sound to remove outliers at zero likelihood?
+# Compute the analysis of variance
+#res.aov = aov((Renewal.Liklihood_1)^2 ~ label, data = mat_retention_fin_1) square transformation
+
+res.aov = aov((Renewal.Liklihood_1) ~ label, data = mat_retention_fin_1)
+
+# Summary of the analysis
+#summary(res.aov)
+
+# Check Assumptions
+
+#Equal Var: Satisfied
+
+par(mfrow = c(1,2))
+
+plot(res.aov,1)
+bartlett.test(Renewal.Liklihood_1 ~ label, data = mat_retention_fin_1) #null: all populations variances are equal
+
+#Normality: Failed --> tried square transformation and it helped but didn't completely fix
+plot(res.aov,2)
+shapiro.test(res.aov$residuals) #null is that data is normally dist
+```
+
+There is a clear violation of normality so we must use specialty ANOVA tests that don't require this assumption.
+
+```{r}
+#These versions don't need normality assumption
+kruskal.test(Renewal.Liklihood_1 ~ label, data = mat_retention_fin_1) #same shape dist: verified --> check density plot
+
+pairwise.wilcox.test(mat_retention_fin_1$Renewal.Liklihood_1, mat_retention_fin_1$label,
+                 p.adjust.method = "BH") #no p-value correction, alt use "BH"
+
+#Finding: No difference in renewal likelihood across groups
+```
+
+These tests suggest that there is not a statistically significant difference in renewal likelihoods across conditions.
+
+#### OLS
+
+Alternatively to an ANOVA model, we can build a regression model to control for explanatory variables that may influence the effect of memory on renewal likelihood.
+
+Linear regression model
+
+$Renewal\ Likelihood^2 = \beta_0 +\ \beta_1\ memory\ score + \beta_2\ age\ bucket\ [35-50] + \beta_3\ age\ bucket\ [>50]$
+
+```{r}
+#y: renewal likelihood
+#x: memory score, age buckets, gender, page time, buffer performance
+
+reg_1 = lm((Renewal.Liklihood_1)^2 ~ memory_score + label + page_time + buffer_count, data = mat_retention_fin_1)
+
+reg_1 = lm((Renewal.Liklihood_1)^2 ~ memory_score + age_bucket, data = filter(mat_retention_fin_1, label != "Reduced List"))
+
+reg_1 = lm((Renewal.Liklihood_1)^2 ~ memory_score + age_bucket + Gender, 
+           data = filter(mat_retention_fin_1, Gender == "Female" | Gender == "Male")) #add gender var (no effect)
+
+reg_1 = lm((Renewal.Liklihood_1)^2 ~ memory_score + age_bucket, data = mat_retention_fin_1) #selected model
+
+summary(reg_1)
+
+summ(reg_1)
+
+par(mfrow = c(1,2))
+
+plot(reg_1, which = 1:2) #constant var (mean zero), normal dist
+
+x = mat_retention_fin_1 %>%  dplyr::select(Renewal.Liklihood_1, memory_score, page_time, buffer_count)
+cor(x, method = "pearson", use = "complete.obs") #multicollinearity check
+
+
+#ppl more likely to renew when they remember
+```
+
+OLS Assumptions hold and there is a statistically significant relationship (at the 10% level) between benefit memory retention and renewal likelihood when controlling for age groups.
+
+**Main Findings**
+
+1. There is a positive and statistically significant (10%) relationship between renewal likelihood and memory. This suggests that individuals who remember the season ticket benefits more are more likely to renew their season tickets.
+
+2. No significant treatment effects for memory nor renewal likelihood were found.
+
+3. We would suggest that clearly communicating season ticket benefits to current holders plays a role in their likelihood to renew. Given that people don't spend a considerable amount of time going through their emails, its crucial to clearly display the benefits to enhance individual's memory retention. 
+
+#### Miscellaneous: Summary Stats & Payments
+
+Summary Stats: Requested by the professor
+
+```{r}
+mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(mean_memory = mean(memory_score)) %>%
+  arrange(-mean_memory)
+
+mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(mean_renewal = mean(Renewal.Liklihood_1)) %>%
+  arrange(-mean_renewal)
+```
+
+Payments: Monetary payments to participants
+
+```{r}
+df_payments = cbind(MTurkID = df_1$MTurkID, Payment = mat_retention_fin_pre$user_payment) %>% 
+  data.frame() %>% arrange(MTurkID)
+
+#write.csv(df_payments, "qualtrics_payments.csv")
+```
+
+
