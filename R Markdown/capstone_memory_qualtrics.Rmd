@@ -449,8 +449,8 @@ position = mat_retention_fin_1 %>%
   
 mat_retention_fin_1 %>%
   group_by(label) %>%
-  summarise(False = mean(prop_F),
-            sd = sd(prop_F, na.rm = T),
+  summarise(False = mean(prop_F)*100,
+            sd = sd(prop_F*100, na.rm = T),
             se = sd / sqrt(n()),
             alpha = 0.05,
             t = qt((1-alpha)/2 + .5, n()-1),   # tend to 1.96 if sample size is big enough
@@ -480,8 +480,8 @@ position = mat_retention_fin_1 %>%
   
 mat_retention_fin_1 %>%
   group_by(label) %>%
-  summarise(True = mean(prop_T),
-            sd = sd(prop_T, na.rm = T),
+  summarise(True = mean(prop_T)*100,
+            sd = sd(prop_T*100, na.rm = T),
             se = sd / sqrt(n()),
             alpha = 0.05,
             t = qt((1-alpha)/2 + .5, n()-1),   # tend to 1.96 if sample size is big enough
