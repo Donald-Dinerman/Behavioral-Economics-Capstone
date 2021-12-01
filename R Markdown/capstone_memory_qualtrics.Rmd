@@ -430,43 +430,75 @@ Need to take proportion approach to account for limited choice set for the 'redu
 
 #new x: difference in proportions to control for diff in benefit options and n_attempts
 
+#FALSE
 mat_retention_fin_1 = mat_retention_fin_1 %>%
   mutate(prop_T = round(T_num/n_attempts, 3),
          prop_F = round(F_num/n_attempts, 3),
          prop_diff = prop_T-prop_F) 
 
+position = mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(False = mean(prop_F),
+            sd = sd(prop_T, na.rm = T),
+            se = sd / sqrt(n()),
+            alpha = 0.05,
+            t = qt((1-alpha)/2 + .5, n()-1),   # tend to 1.96 if sample size is big enough
+            CI = t*se) %>% 
+  arrange(-False) %>%
+  pull(1)
+  
 mat_retention_fin_1 %>%
   group_by(label) %>%
-  summarise(True = mean(T_num),
-            False = mean(F_num)) %>% 
-  pivot_longer(cols = True:False,
+  summarise(False = mean(prop_F),
+            sd = sd(prop_F, na.rm = T),
+            se = sd / sqrt(n()),
+            alpha = 0.05,
+            t = qt((1-alpha)/2 + .5, n()-1),   # tend to 1.96 if sample size is big enough
+            CI = t*se) %>%
+  pivot_longer(cols = False,
                names_to = "T_or_F",
                values_to = "Total") %>%
-  ggplot(aes(x = label, y = Total, fill = T_or_F)) +
-  geom_col(col = "black", position = "dodge") +
-  labs(title = "Total Recollection", x = "Condition", y = "Recollection Total", fill = "True or False") +
-  guides(fill = guide_legend(reverse=TRUE))
+  ggplot(aes(x = label, y = Total)) +
+  geom_col(position = "dodge", col = "black", fill = "steelblue") +
+  geom_errorbar(aes(ymin = Total - CI, ymax= Total + CI), width = .2) +
+  scale_x_discrete(limits = position[length(position):1]) +
+  coord_flip() +
+  labs(title = "Average Incorrect Recollection Percentage", x = "Condition", y = "Recollection Percentage (%)", 
+       subtitle = "Error bars represent 95% confidence interval")
+  
+#TRUE
+position = mat_retention_fin_1 %>%
+  group_by(label) %>%
+  summarise(True = mean(prop_T),
+            sd = sd(prop_T, na.rm = T),
+            se = sd / sqrt(n()),
+            alpha = 0.05,
+            t = qt((1-alpha)/2 + .5, n()-1),   # tend to 1.96 if sample size is big enough
+            CI = t*se) %>% 
+  arrange(-True) %>%
+  pull(1)
   
 mat_retention_fin_1 %>%
   group_by(label) %>%
   summarise(True = mean(prop_T),
-            False = mean(prop_F)) %>%
-  pivot_longer(cols = True:False,
+            sd = sd(prop_T, na.rm = T),
+            se = sd / sqrt(n()),
+            alpha = 0.05,
+            t = qt((1-alpha)/2 + .5, n()-1),   # tend to 1.96 if sample size is big enough
+            CI = t*se) %>%
+  pivot_longer(cols = True,
                names_to = "T_or_F",
                values_to = "Total") %>%
-  ggplot(aes(x = label, y = Total, fill = T_or_F)) +
-  geom_col(position = "dodge", col = "black") +
-  labs(title = "Mean Recolection Proportion", x = "Condition", y = "Recolection Proportion (%)", fill = "True or False")  +
-  guides(fill = guide_legend(reverse=TRUE))
+  ggplot(aes(x = label, y = Total)) +
+  geom_col(position = "dodge", col = "black", fill = "steelblue") +
+  geom_errorbar(aes(ymin = Total - CI, ymax= Total + CI), width = .2) +
+  scale_x_discrete(limits = position[length(position):1]) +
+  coord_flip() +
+  labs(title = "Average Correct Recollection Percentage", x = "Condition", y = "Recollection Percentage (%)", 
+       subtitle = "Error bars represent 95% confidence interval")
 ```
 
-True recollection represents correct benefit recall and false recollection represents incorrect benefit recall.
-
 Participants in the reduced list had the greatest true recollection and the least false recollections (proportionally). Note that this finding is not statistically significant.
-
-Subjects are grouped whether they are above or below the median memory performance on the buffer activity
-
-Control for subjects with inherently good or bad memorization skills
 
 ```{r, message=F, warning=F}
 #color by buffer median and group by condition
@@ -484,6 +516,8 @@ mat_retention_fin_1 %>%
   geom_col(col = "black", position = "dodge") +
   labs(title = "Mean False Recolection Proportion", x = "Condition", y = "False Recolection Proportion (%)", fill = "Buffer Memory")
 ```
+
+Subjects are grouped whether they are above or below the median memory performance on the buffer activity.
 
 Individuals performing above the median in the buffer test appear to have systemically higher true recollection than individuals performing above the median.
 
@@ -665,7 +699,7 @@ rl_plot_func(mat_retention_fin_1)
 
 There is no statistically significant difference in renewal likelihoods across the conditions.
 
-```{r, message=F, warning=F}
+```{r, message=F, warning=F, include=F}
 #memory vs renewal likelihood
 #trying to visualize connection between memory score and renewal likelihood
 
@@ -698,7 +732,36 @@ ggplot(mat_retention_fin_1, aes(x = as.factor(memory_score))) +
   labs(title = "Distribution of Memory Scores Across Ages", y = "Count", x = "Memory Score")
 ```
 
-There may be a positive relationship between memory scores and renewal likelihoods that should be explored in the modeling section via regression analysis.
+```{r}
+mat_retention_fin_1$median_memory = ifelse(mat_retention_fin_1$memory_score < median(mat_retention_fin_1$memory_score),
+                                            "Below Median", "Above Median") %>% as.factor()
+
+position = mat_retention_fin_1 %>%
+  group_by(median_memory) %>%
+  summarise(mean_renewal = mean(Renewal.Liklihood_1),
+            sd = sd(Renewal.Liklihood_1, na.rm = T),
+            se = sd / sqrt(n()),
+            alpha = 0.05,
+            t = qt((1-alpha)/2 + .5, n()-1),   # tend to 1.96 if sample size is big enough
+            CI = t*se) %>% 
+  arrange(-mean_renewal)
+
+mat_retention_fin_1 %>%
+  group_by(median_memory) %>%
+  summarise(mean_renewal = mean(Renewal.Liklihood_1),
+            sd = sd(Renewal.Liklihood_1, na.rm = T),
+            se = sd / sqrt(n()),
+            alpha = 0.05,
+            t = qt((1-alpha)/2 + .5, n()-1),   # tend to 1.96 if sample size is big enough
+            CI = t*se) %>%
+  ggplot(aes(x = median_memory, y = mean_renewal)) +
+    geom_col(position = "dodge", col = "black", fill = "steelblue") +
+    geom_errorbar(aes(ymin = mean_renewal - CI, ymax= mean_renewal + CI), width = .2) +
+    labs(title = "Average Renwal Likelihood by Benefits Remebered", x = "Benefits Remembered (Median Split)", 
+         y = "Average Renewal Likelihood", subtitle = "Error bars represent 95% confidence interval")
+```
+
+There may be a positive relationship between memory retention and renewal likelihoods that should be explored in the modeling section via regression analysis.
 
 ```{r, message=F, warning=F}
 #Age Buckets
@@ -899,6 +962,8 @@ OLS Assumptions hold and there is a statistically significant relationship (at t
 1. There is a positive and statistically significant (10%) relationship between renewal likelihood and memory. This suggests that individuals who remember the season ticket benefits more are more likely to renew their season tickets.
 
 2. No significant treatment effects for memory nor renewal likelihood were found.
+
+4. Participants spent less time on the screen in the reduced condition, but remembered the same number of benefits as the control and other treatment conditions, on average.
 
 3. We would suggest that clearly communicating season ticket benefits to current holders plays a role in their likelihood to renew. Given that people don't spend a considerable amount of time going through their emails, its crucial to clearly display the benefits to enhance individual's memory retention. 
 
