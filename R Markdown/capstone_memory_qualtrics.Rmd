@@ -765,13 +765,17 @@ There may be a positive relationship between memory retention and renewal likeli
 
 ```{r, message=F, warning=F}
 #Age Buckets
+ggplot(mat_retention_fin_1, aes(x = memory_score)) +
+         geom_density(aes(fill = age_bucket), alpha = 0.4) +
+  labs(title = "Distribution of Memory Scores Across Ages", y = "Density", x = "Memory Score", fill = "Age Buckets")
+```
+
+```{r, include=F}
 ggplot(mat_retention_fin_1, aes(x = as.factor(memory_score))) +
          geom_bar(aes(fill = age_bucket), col = "black", position = "dodge") +
   labs(title = "Distribution of Memory Scores Across Ages", y = "Count", x = "Memory Score", fill = "Age Buckets")
 
-ggplot(mat_retention_fin_1, aes(x = memory_score)) +
-         geom_density(aes(fill = age_bucket), alpha = 0.4) +
-  labs(title = "Distribution of Memory Scores Across Ages", y = "Density", x = "Memory Score", fill = "Age Buckets")
+
 
 n_scores = mat_retention_fin_1 %>%
   group_by(memory_score) %>%
@@ -793,23 +797,23 @@ mat_retention_fin_1 %>%
 
 Older subjects (>50) appear to have a better memory score across all the conditions compared to other age groups.
 
+```{r, include = F}
 ### Value
 
-Analysis of benefits that subjects remembered and value.
+#Analysis of benefits that subjects remembered and value.
 
-Note: Our analysis, findings, and presentation mostly concerned benefit memory retention and its impact on season ticket renewals rather than valued benefits.
+#Note: Our analysis, findings, and presentation mostly concerned benefit memory retention and its impact on season ticket renewals rather #than valued benefits.
 
-```{r, message=F, warning=F}
+#```{r, message=F, warning=F}
 #memory score
-ms_plot_func(mat_value_fin_1)
-```
+#ms_plot_func(mat_value_fin_1)
+#```
 
-```{r, message=F, warning=F}
+#```{r, message=F, warning=F}
 #renewal likelihood
 
-rl_plot_func(mat_value_fin_1)
+#rl_plot_func(mat_value_fin_1)
 ```
-
 
 ## Statistical Tests
 
@@ -967,27 +971,28 @@ OLS Assumptions hold and there is a statistically significant relationship (at t
 
 3. We would suggest that clearly communicating season ticket benefits to current holders plays a role in their likelihood to renew. Given that people don't spend a considerable amount of time going through their emails, its crucial to clearly display the benefits to enhance individual's memory retention. 
 
+```{r,include=F}
 #### Miscellaneous: Summary Stats & Payments
 
-Summary Stats: Requested by the professor
+#Summary Stats: Requested by the professor
 
-```{r, message = F , warning=F}
-mat_retention_fin_1 %>%
-  group_by(label) %>%
-  summarise(mean_memory = mean(memory_score)) %>%
-  arrange(-mean_memory)
+#```{r, message = F , warning=F}
+#mat_retention_fin_1 %>%
+#  group_by(label) %>%
+#  summarise(mean_memory = mean(memory_score)) %>%
+#  arrange(-mean_memory)
 
-mat_retention_fin_1 %>%
-  group_by(label) %>%
-  summarise(mean_renewal = mean(Renewal.Liklihood_1)) %>%
-  arrange(-mean_renewal)
-```
+#mat_retention_fin_1 %>%
+#  group_by(label) %>%
+#  summarise(mean_renewal = mean(Renewal.Liklihood_1)) %>%
+#  arrange(-mean_renewal)
+#```
 
-Payments: Monetary payments to participants
+#Payments: Monetary payments to participants
 
-```{r}
-df_payments = cbind(MTurkID = df_1$MTurkID, Payment = mat_retention_fin_pre$user_payment) %>% 
-  data.frame() %>% arrange(MTurkID)
+#```{r}
+#df_payments = cbind(MTurkID = df_1$MTurkID, Payment = mat_retention_fin_pre$user_payment) %>% 
+#  data.frame() %>% arrange(MTurkID)
 
 #write.csv(df_payments, "qualtrics_payments.csv")
 ```
