@@ -82,7 +82,7 @@ im = image_read("Picture2.png")
 image_trim(im)
 ```
 
-3. Reduced List: Display the 5 highest ranked benefits in a matrix. (behavioral economics literature suggest $7\pm2$ choices are optimal for memory recollection).
+3. Reduced List: Display the 5 highest ranked benefits in a matrix.
 
 ```{r, echo = F}
 #show image
