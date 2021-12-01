@@ -28,7 +28,7 @@ Minnesota Wild & New York Islanders (NHL Teams)
 
 **Research Objective**
 
-Using a behaviorally-informed approach, increase season ticket renewals.
+Using a behaviorally-informed approach to increase season ticket renewals.
 
 **Behavioral Approach**
 
@@ -39,6 +39,14 @@ The emails sent out to season ticket holders are do not clearly convey the messa
 *Solution*
 
 Modify the email format to concisely highlight the main message that season ticket holders should renew their tickets and to better showcase the benefits.
+
+**Variables of Interest**
+
+1. Benefit Memory Retention
+
+2. Season Ticket Renewal Likelihood
+
+3. Demographic Information (e.g., Age, Gender)
 
 **Control**
 
