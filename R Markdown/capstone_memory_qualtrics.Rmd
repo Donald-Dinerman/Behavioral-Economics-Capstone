@@ -18,6 +18,7 @@ library(readxl)
 library(jtools) #summ
 library(kableExtra)
 library(gridExtra)
+library(magick)
 ```
 
 # Experimental Design
@@ -52,15 +53,43 @@ Modify the email format to concisely highlight the main message that season tick
 
 Current Minnesota Wild email communications to season ticket holders.
 
+```{r, echo = F}
+#show image
+
+im = image_read("Picture4.png")
+image_trim(im)
+```
+
 **Treatments**
 
 All treatments have the same concise messaging regarding season ticket renewals. The differences are how we design the benefits matrix.
 
 1. Ranking: Organize the benefits by their rankings according to subjects' preferences.
 
-2. Categorization: Create buckets relating the benefits (e.g., fan experience, merchandise, etc.) while maintaning the ranking system within each bucket.
+```{r, echo = F}
+#show image
+
+im = image_read("Picture1.png")
+image_trim(im)
+```
+
+2. Categorization: Create buckets relating the benefits while maintaining the ranking system within each bucket.
+
+```{r, echo = F}
+#show image
+
+im = image_read("Picture2.png")
+image_trim(im)
+```
 
 3. Reduced List: Display the 5 highest ranked benefits in a matrix. (behavioral economics literature suggest $7\pm2$ choices are optimal for memory recollection).
+
+```{r, echo = F}
+#show image
+
+im = image_read("Picture3.png")
+image_trim(im)
+```
 
 # Pre-Test
 
