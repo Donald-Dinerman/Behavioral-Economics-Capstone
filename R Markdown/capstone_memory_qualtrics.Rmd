@@ -56,7 +56,7 @@ Current Minnesota Wild email communications to season ticket holders.
 ```{r, echo = F}
 #show image
 
-im = image_read("Picture4.png")
+im = image_read("C:/Temp One Drive/Capstone/Picture4.png")
 image_trim(im)
 ```
 
@@ -69,7 +69,7 @@ All treatments have the same concise messaging regarding season ticket renewals.
 ```{r, echo = F}
 #show image
 
-im = image_read("Picture1.png")
+im = image_read("C:/Temp One Drive/Capstone/Picture1.png")
 image_trim(im)
 ```
 
@@ -78,7 +78,7 @@ image_trim(im)
 ```{r, echo = F}
 #show image
 
-im = image_read("Picture2.png")
+im = image_read("C:/Temp One Drive/Capstone/Picture2.png")
 image_trim(im)
 ```
 
@@ -87,7 +87,7 @@ image_trim(im)
 ```{r, echo = F}
 #show image
 
-im = image_read("Picture3.png")
+im = image_read("C:/Temp One Drive/Capstone/Picture3.png")
 image_trim(im)
 ```
 
@@ -525,7 +525,7 @@ Individuals performing below the median in the buffer test appear to have system
 
 Note that both of these observations are separated by a narrow margin for subjects in the categorization condition.
 
-#### Timing
+### Timing
 
 Analysis of the amount of time subjects are spending looking at the emails.
 
@@ -590,7 +590,7 @@ Screen time is not significantly different among the treatments and control but 
 
 Also the control appears to have the highest screen time which may be attributed to its lack of clarity in displaying the benefits and its bulky text requesting season ticket renewals.
 
-#### Memory Score
+### Memory Score
 
 Memory score is defined as the difference between correct and incorrect benefit recollection.
 
@@ -643,7 +643,7 @@ Across groups there is no significant difference in memory scores (not including
 
 Note that the reduced list condition has a smaller memory score because it presents subjects with fewer benefits. This reduced choice set sets a smaller cap of their memory score relative to the other conditions.
 
-#### Renewal Likelihood
+### Renewal Likelihood
 
 ```{r, message=F, warning=F}
 #RL density plot colored by condition
@@ -817,11 +817,11 @@ Older subjects (>50) appear to have a better memory score across all the conditi
 
 ## Statistical Tests
 
-#### ANOVA
+### ANOVA
 
 ANOVA: analysis mean likelihood of renewals across treatments, analysis benefit memory retention score groups
 
-##### Memory Score
+#### Memory Score
 ```{r, message = F , warning=F}
 #Memory Score
 # Compute the analysis of variance; null: all mean are equal across groups
@@ -882,7 +882,7 @@ plot(post_test)
 
 Specialty ANOVA tests suggest that there is a significant difference in memory scores between the control and reduced list. However, this finding is not meaningful considering that the reduced choice list in the treatment systemically reduces its memory score.
 
-##### Renewal Likelihood
+#### Renewal Likelihood
 ```{r, message = F , warning=F}
 #Renewal likelihood
 
@@ -923,7 +923,7 @@ pairwise.wilcox.test(mat_retention_fin_1$Renewal.Liklihood_1, mat_retention_fin_
 
 These tests suggest that there is not a statistically significant difference in renewal likelihoods across conditions.
 
-#### OLS
+### OLS
 
 Alternatively to an ANOVA model, we can build a regression model to control for explanatory variables that may influence the effect of memory on renewal likelihood.
 
@@ -946,7 +946,7 @@ reg_1 = lm((Renewal.Liklihood_1)^2 ~ memory_score + age_bucket, data = mat_reten
 
 summary(reg_1)
 
-summ(reg_1)
+#summ(reg_1) stylized table
 
 par(mfrow = c(1,2))
 
