@@ -102,6 +102,8 @@ image_trim(im)
 
 **Experimental Survey Flow**
 
+We designed our survey on Qualtrics and deployed it using MTurk.
+
 ```{r, echo = F}
 #show image
 
@@ -111,9 +113,9 @@ image_trim(im)
 
 # Pre-Test
 
-Survey our subject pool on MTurk about their preferences regarding season ticket benefits.
+Before our experimental survey, we conducted a pre-test survey to learn about our subject pool's preferences regarding season ticket benefits.
 
-Analysis of pre-test data is used to inform our ranking system for benefits in our treatments.
+These preferences were then used to inform our benefits ranking system in our treatment email designs.
 
 ## Benefit Ranking
 
