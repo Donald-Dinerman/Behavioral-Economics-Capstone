@@ -903,7 +903,7 @@ mat_retention_fin_1 %>%
 
 Analysis of season ticket benefit retention across treatment conditions.
 
-```{r, message = F , warning=F, fig.cap = "Figure 9: Scatterplot of residuals and fitted values & QQ plot to test constant variance and normality assumptions for the ANOVA model.."}
+```{r, message = F , warning=F, fig.cap = "Figure 9: Scatterplot of residuals and fitted values & QQ plot to test constant variance and normality assumptions for the ANOVA model."}
 #Memory Score
 # Compute the analysis of variance; null: all mean are equal across groups
 #Should only compare != Reduced list groups for memory score
