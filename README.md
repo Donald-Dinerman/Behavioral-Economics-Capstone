@@ -19,7 +19,7 @@ likelihood, and demographic information across over
 400 individuals.
 
 The R Markdown code is within its
-respective folders.
+respective folder.
 
 ## Authors
 
