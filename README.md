@@ -5,7 +5,7 @@
 We worked with the Minnesota Wild and New York
 Islanders to increase season ticket renewals.
 
-We created an experimental survey where we modified
+We designed an experimental survey where we modified
 the teams' email communications to season ticket 
 holders containing information about their ticket 
 benefits.
