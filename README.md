@@ -14,6 +14,9 @@ We then tracked participants memory retention of
 the benefits along with their likelihood to renew 
 their season tickets.
 
+Lastly, we conducted robust ANOVA tests and designed 
+linear regression models to test for treatment effects.
+
 Our dataset contains memory retention, renewal 
 likelihood, and demographic information across over 
 400 individuals.
