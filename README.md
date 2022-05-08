@@ -21,9 +21,6 @@ Our dataset contains memory retention, renewal
 likelihood, and demographic information across over 
 400 individuals.
 
-The R Markdown code is within its
-respective folder.
-
 ## Authors
 
 - [@donalddinerman](https://www.github.com/Donald-Dinerman)
