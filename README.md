@@ -19,7 +19,7 @@ linear regression models to test for treatment effects.
 
 Our dataset contains memory retention, renewal 
 likelihood, and demographic information across over 
-400 individuals.
+400 individuals. 
 
 ## Authors
 
