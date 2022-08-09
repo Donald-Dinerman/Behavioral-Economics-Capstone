@@ -1056,7 +1056,7 @@ x = mat_retention_fin_1 %>%  dplyr::select(Renewal.Liklihood_1, memory_score, pa
 #ppl more likely to renew when they remember
 ```
 
-OLS Assumptions hold and there is a statistically significant relationship (at the 10% level) between benefit memory retention and renewal likelihood when controlling for age groups.
+OLS Assumptions hold and there is a statistically significant relationship (at the 10% level) between benefit memory retention and squared renewal likelihood when controlling for age groups.
 
 **Limitations**
 
