@@ -1,6 +1,6 @@
 # Behavioral Economics Capstone Project
 
-*See the fully knitted project [here](https://donald-dinerman.github.io/Behavioral-Economics-Capstone-Project/)*.
+*See the fully knitted project [here](https://donald-dinerman.github.io/Behavioral-Economics-Capstone/)*.
 
 We worked with the Minnesota Wild and New York
 Islanders to increase season ticket renewals.
