@@ -7,7 +7,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F) 
+knitr::opts_chunk$set(echo = F, fig.align = 'center', out.width = '75%')
 ```
 
 ```{r, include = FALSE}
@@ -180,9 +180,11 @@ tab_1 = df_pre_fin %>%
 colnames(tab_1) = c("Benefit", "Top Five", "Ranking")
 
 head(tab_1, 5) %>%
-  kbl(caption = "Table 1: Top 5 Pre-Test Benefits", booktabs = T) %>% 
+  kbl(caption = "", booktabs = T) %>% 
   kable_paper("hover", full_width = T)
 ```
+
+Table 1: Top 5 Pre-Test Benefits
 
 # Experiment
 
@@ -437,9 +439,11 @@ tab_2 = mat_retention_fin_1 %>%
 colnames(tab_2) = c("Condition", "Sample Size")
 
 tab_2 %>%
-  kbl(caption = "Table 2: Sample Size Across Conditions", booktabs = T) %>% 
+  kbl(caption = "", booktabs = T) %>% 
   kable_paper("hover", full_width = T)
 ```
+
+Table 2: Sample Size Across Conditions
 
 According to Table 2, we have a relatively robust and equal amount of subjects for each condition in our experiment.
 
@@ -498,7 +502,8 @@ mat_retention_fin_1 %>%
   scale_x_discrete(limits = position[length(position):1]) +
   coord_flip() +
   labs(title = "Average Correct Recollection", x = "Condition", y = "Recollection Percentage (%)", 
-       subtitle = "Error bars represent 95% confidence interval")
+       subtitle = "Error bars represent 95% confidence interval") +
+  theme_bw()
 ```
 
 ```{r, message=F, warning=F, include=F}
@@ -520,7 +525,8 @@ mat_retention_fin_1 %>%
   scale_x_discrete(limits = position[length(position):1]) +
   coord_flip() +
   labs(title = "Average False Recollection", x = "Condition", y = "Recollection Percentage (%)", 
-       subtitle = "Error bars represent 95% confidence interval")
+       subtitle = "Error bars represent 95% confidence interval") +
+  theme_bw()
 ```
 
 Participants in the reduced list have the greatest correct recollection (proportionally) across conditions. However, this finding is not statistically significant and is not necessarily novel considering these subjects are presented with less benefits they have to remember.
@@ -535,7 +541,8 @@ mat_retention_fin_1 %>%
   summarise(mean_prop_T = mean(prop_T)) %>%
   ggplot(aes(x = label, y = 100*mean_prop_T, fill = buffer_group)) +
   geom_col(col = "black", position = "dodge") +
-  labs(title = "Average Correct Recollection", x = "Condition", y = "True Recolection (%)", fill = "Buffer Memory")
+  labs(title = "Average Correct Recollection", x = "Condition", y = "True Recolection (%)", fill = "Buffer Memory") +
+  theme_bw()
 ```
 
 
@@ -545,7 +552,8 @@ mat_retention_fin_1 %>%
   summarise(mean_prop_F = mean(prop_F)) %>%
   ggplot(aes(x = label, y = 100*mean_prop_F, fill = buffer_group)) +
   geom_col(col = "black", position = "dodge") +
-  labs(title = "Mean False Recollection", x = "Condition", y = "False Recolection (%)", fill = "Buffer Memory")
+  labs(title = "Mean False Recollection", x = "Condition", y = "False Recolection (%)", fill = "Buffer Memory") +
+  theme_bw()
 ```
 
 Subjects are grouped whether they are above or below the median memory performance on the buffer activity in figures 2 and 3.
@@ -583,11 +591,13 @@ mat_retention_fin_1 %>%
   scale_x_discrete(limits = position) +
   coord_flip() +
   labs(title = "Average Time Spent On Email Across Conditions", x = "Conditions", y = "Average Time (Seconds)",
-       subtitle = "Error bars represent 95% confidence interval")
+       subtitle = "Error bars represent 95% confidence interval") +
+  theme_bw()
 
 ggplot(mat_retention_fin_1, aes(x = page_time, col = label)) +
   geom_density() +
-  labs(title = "Distribution of Time Spent on Screen Across Conditions", x = "Screen Time (Seconds)", col = "Condition", y = "Density")
+  labs(title = "Distribution of Time Spent on Screen Across Conditions", x = "Screen Time (Seconds)", col = "Condition", y = "Density") +
+  theme_bw()
 
 mat_retention_fin_1 %>%
   group_by(label) %>%
@@ -603,7 +613,8 @@ mat_retention_fin_1 %>%
   scale_x_discrete(limits = position) +
   coord_flip() +
   labs(title = "Median Time Spent On Email Across Conditions", x = "Conditions", y = "Median Time (Seconds)",
-       subtitle = "Error bars represent 95% confidence interval")
+       subtitle = "Error bars represent 95% confidence interval") +
+  theme_bw()
 ```
 
 
@@ -615,9 +626,10 @@ position = mat_retention_fin_1 %>%
   pull(1)
 
 ggplot(mat_retention_fin_1) +
-  geom_boxplot(aes(x = label, y = page_time), col = "black", fill = "steelblue", alpha = 0.3) +
+  geom_boxplot(aes(x = label, y = page_time), col = "black", fill = "steelblue", alpha = 0.5) +
   scale_x_discrete(limits = position) +
-  labs(title = "Boxplot of Screen Times Across Conditions", x = "Condition", y = "Screen Time (Seconds)")
+  labs(title = "Boxplot of Screen Times Across Conditions", x = "Condition", y = "Screen Time (Seconds)") +
+  theme_bw()
 ```
 
 Screen time is not significantly different among the treatments and control but the reduced list email condition has the lowest average time spent on screen. This does not come as a surprise considering it contains 6 fewer benefits than the other conditions.
@@ -637,7 +649,8 @@ ms_plot_func = function(mat_retention_fin_1){
   
 p1 = ggplot(mat_retention_fin_1, aes(x = memory_score, col = label)) +
   geom_density() +
-  labs(title = "Distribution of Memory Retention Across Conditions", x = "Memory Score", col = "Condition", y = "Density")
+  labs(title = "Distribution of Memory Retention Across Conditions", x = "Memory Score", col = "Condition", y = "Density") +
+  theme_bw()
 
 #determine factor positioning
 positions = mat_retention_fin_1 %>%
@@ -661,13 +674,15 @@ p2 = mat_retention_fin_1 %>%
   scale_x_discrete(limits = positions[length(positions):1]) + #reverse string
   coord_flip() +
   labs(title = "Average Memory Scores Across Conditions", x = "Condition", y = "Average Memory Score", 
-       subtitle = "Error bars represent 95% confidence interval")
+       subtitle = "Error bars represent 95% confidence interval") +
+  theme_bw()
 
 #boxplot of MS by condition
 p3 = ggplot(mat_retention_fin_1) +
   geom_boxplot(aes(x = label, y = memory_score), col = "black", fill = "steelblue", alpha = 0.3) +
   scale_x_discrete(limits = positions) +
-  labs(title = "Boxplot of Memory Scores Across Conditions", x = "Condition", y = "Average Memory Score")
+  labs(title = "Boxplot of Memory Scores Across Conditions", x = "Condition", y = "Average Memory Score") +
+  theme_bw()
 
 #list(p1,p2,p3)
 p2
@@ -688,7 +703,8 @@ rl_plot_func = function(mat_retention_fin_1){
   
 p1 = ggplot(mat_retention_fin_1, aes(x = (Renewal.Liklihood_1), col = label)) +
   geom_density() +
-  labs(title = "Distribution of Renewal Liklihood Across Conditions", x = "Renewal Liklihood", y = "Density", col = "Conditions")
+  labs(title = "Distribution of Renewal Liklihood Across Conditions", x = "Renewal Liklihood", y = "Density", col = "Conditions") +
+  theme_bw()
 
 #determine factor positioning
 positions = mat_retention_fin_1 %>%
@@ -712,7 +728,8 @@ p2 = mat_retention_fin_1 %>%
   scale_x_discrete(limits = positions[length(positions):1]) + #reverse string
   coord_flip() +
   labs(title = "Average Renewal Likelihoods Across Conditions", x = "Condition", y = "Average Renewal Likelihood (%)",
-       subtitle = "Error bars represent 95% confidence interval")
+       subtitle = "Error bars represent 95% confidence interval") +
+  theme_bw()
 
 #boxplot of RL by condition
 
@@ -725,7 +742,8 @@ positions = mat_retention_fin_1 %>%
 p3 = ggplot(mat_retention_fin_1) +
   geom_boxplot(aes(x = label, y = Renewal.Liklihood_1), col = "black", fill = "steelblue", alpha = 0.3) +
   scale_x_discrete(limits = positions) +
-  labs(title = "Boxplot of Renewal Likelihoods Across Conditions", x = "Condition", y = "Average Renewal Likelihood (%)")
+  labs(title = "Boxplot of Renewal Likelihoods Across Conditions", x = "Condition", y = "Average Renewal Likelihood (%)") +
+  theme_bw()
 
 #list(p1,p2,p3)
 p2
@@ -748,7 +766,8 @@ mat_retention_fin_1 %>%
   geom_col(col = "black", fill = "steelblue") + 
   coord_cartesian(ylim = c(60, 80)) +
   labs(title = "Median Renewal Likelihood Across Memory Scores", x = "Memory Score", y = "Median Renewal Likelihood (%)", 
-       subtitle = "Filtered for observations n >= 10")
+       subtitle = "Filtered for observations n >= 10") +
+  theme_bw()
 
 mat_retention_fin_1 %>%
   group_by(h = as.factor(memory_score)) %>%
@@ -758,15 +777,18 @@ mat_retention_fin_1 %>%
   geom_col(col = "black", fill = "steelblue") + 
   coord_cartesian(ylim = c(60, 80)) + #zoom in
   labs(title = "Mean Renewal Likelihood Across Memory Scores", x = "Memory Score", y = "Mean Renewal Likelihood (%)",
-       subtitle = "Filtered for observations n >= 10")
+       subtitle = "Filtered for observations n >= 10") +
+  theme_bw()
 
 ggplot(mat_retention_fin_1, aes(x = as.factor(memory_score), y = Renewal.Liklihood_1)) + 
   geom_col(fill = "steelblue") + 
-  labs(title = "Cumulative Renewal Likelihood Across Memory Scores", x = "Memory Score", y = "Mean Renewal Likelihood (%)")
+  labs(title = "Cumulative Renewal Likelihood Across Memory Scores", x = "Memory Score", y = "Mean Renewal Likelihood (%)") +
+  theme_bw()
 
 ggplot(mat_retention_fin_1, aes(x = as.factor(memory_score))) +
          geom_bar(fill = "steelblue", col = "black") +
-  labs(title = "Distribution of Memory Scores Across Ages", y = "Count", x = "Memory Score")
+  labs(title = "Distribution of Memory Scores Across Ages", y = "Count", x = "Memory Score") +
+  theme_bw()
 ```
 
 ```{r, fig.cap="Figure 7: Average renewal likelihood grouped by median benefits remembered."}
@@ -795,7 +817,8 @@ mat_retention_fin_1 %>%
     geom_col(position = "dodge", col = "black", fill = "steelblue") +
     geom_errorbar(aes(ymin = mean_renewal - CI, ymax= mean_renewal + CI), width = .2) +
     labs(title = "Average Renwal Likelihood by Benefits Remebered", x = "Benefits Remembered (Median Split)", 
-         y = "Average Renewal Likelihood (%)", subtitle = "Error bars represent 95% confidence interval")
+         y = "Average Renewal Likelihood (%)", subtitle = "Error bars represent 95% confidence interval") +
+  theme_bw()
 ```
 
 The top performing half (50%) of subjects in memory tend to have a larger renewal likelihood than the bottom half. This suggests that there may be a positive relationship between memory retention and renewal likelihoods that should be explored in the modeling section via regression analysis.
@@ -804,7 +827,8 @@ The top performing half (50%) of subjects in memory tend to have a larger renewa
 #Age Buckets
 ggplot(mat_retention_fin_1, aes(x = memory_score)) +
          geom_density(aes(fill = age_bucket), alpha = 0.4) +
-  labs(title = "Distribution of Memory Scores Across Ages", y = "Density", x = "Memory Score", fill = "Age Buckets")
+  labs(title = "Distribution of Memory Scores Across Ages", y = "Density", x = "Memory Score", fill = "Age Buckets") +
+  theme_bw()
 
 mat_retention_fin_1 %>%
   group_by(age_bucket) %>%
@@ -838,7 +862,8 @@ mat_retention_fin_1 %>%
     scale_x_discrete(limits = position) +
     coord_cartesian(ylim = c(30, 75)) + #zoom in
     labs(title = "Average Renewal Likelihood by Benefits Remebered", x = "Age Groups", 
-         y = "Average Renewal Likelihood (%)", subtitle = "Error bars represent 95% confidence interval")
+         y = "Average Renewal Likelihood (%)", subtitle = "Error bars represent 95% confidence interval") +
+  theme_bw()
 ```
 
 Subjects between 35-50 years appear to have a higher renewal likelihoods than other age groups. Although these differences do not appear to be statistically significant, they are worth exploring in the modeling section of the analysis.
@@ -846,7 +871,8 @@ Subjects between 35-50 years appear to have a higher renewal likelihoods than ot
 ```{r, include=F}
 ggplot(mat_retention_fin_1, aes(x = as.factor(memory_score))) +
          geom_bar(aes(fill = age_bucket), col = "black", position = "dodge") +
-  labs(title = "Distribution of Memory Scores Across Ages", y = "Count", x = "Memory Score", fill = "Age Buckets")
+  labs(title = "Distribution of Memory Scores Across Ages", y = "Count", x = "Memory Score", fill = "Age Buckets") +
+  theme_bw()
 
 n_scores = mat_retention_fin_1 %>%
   group_by(memory_score) %>%
@@ -863,7 +889,8 @@ mat_retention_fin_1 %>%
   geom_col(col = "black", position = "dodge") +
   coord_cartesian(ylim = c(20, 85)) + #zoom in
   labs(title = "Renewal Likelihood Across Memory Scores and Ages", y = "Average Renewal Likelihood (%)", 
-       x = "Memory Score", fill = "Age Buckets")
+       x = "Memory Score", fill = "Age Buckets") +
+  theme_bw()
 ```
 
 ```{r, include = F}
@@ -953,7 +980,17 @@ post_test <- glht(res.aov.new,
   linfct = mcp(label = "Dunnett")
 )
 
-summary(post_test)
+temp = summary(post_test)
+
+new_lab = c('Categorization - Control = 0', 'Ranking - Control = 0', 'Reduced List - Control = 0')
+
+data.frame(Estimate = temp$test$coefficients, 'Std.Error' = temp$test$sigma, 'P.Value' = temp$test$pvalues[1:3]) %>%  
+  round(3) %>%
+  tibble::rownames_to_column(., 'temp') %>%
+  mutate('Linear Hypotheses' = new_lab, .before = Estimate) %>%
+  dplyr::select(., -temp) %>%
+  kbl(caption = "", booktabs = T) %>% 
+  kable_paper("hover", full_width = T)
 ```
 Table 3: Dunnett linear hypotheses summary table.
 
@@ -999,8 +1036,13 @@ There is a clear violation of normality with strong deviations from the diagnol 
 
 
 ```{r, message = F , warning=F, fig.cap="Table 4: Pairwise comparisons across conditions using Wilcoxon rank sum test with continuity correction."}
-pairwise.wilcox.test(mat_retention_fin_1$Renewal.Liklihood_1, mat_retention_fin_1$label,
+pw_temp = pairwise.wilcox.test(mat_retention_fin_1$Renewal.Liklihood_1, mat_retention_fin_1$label,
                  p.adjust.method = "BH") #no p-value correction, alt use "BH"
+
+pw_temp$p.value %>% data.frame() %>% round(3) %>% mutate_all(as.character) %>% 
+  tidyr::replace_na(., list(Control = "-", Categorization = "-", Ranking = "-")) %>%
+  kbl(caption = "", booktabs = T) %>% 
+  kable_paper("hover", full_width = T)
 ```
 Table 4: Pairwise comparisons across conditions using Wilcoxon rank sum test with continuity correction.
 
@@ -1013,7 +1055,8 @@ Alternatively to an ANOVA model, we can build a regression model to control for 
 The following is the linear regression model:
 
 $Renewal\ Likelihood^2 = \beta_0 +\ \beta_1\ memory\ score + \beta_2\ age\ bucket\ [35-50] + \beta_3\ age\ bucket\ [>50]$
-
+<br><br>
+<center>
 ```{r, message = F , warning=F, fig.cap="Table 5: Linear regression summary results."}
 #y: renewal likelihood
 #x: memory score, age buckets, gender, page time, buffer performance
@@ -1027,10 +1070,13 @@ reg_1 = lm((Renewal.Liklihood_1)^2 ~ memory_score + age_bucket + Gender,
 
 reg_1 = lm((Renewal.Liklihood_1)^2 ~ memory_score + age_bucket, data = mat_retention_fin_1) #selected model
 
-tab_model(reg_1, show.ci = F, show.stat = T, show.se = T)
-```
+reg_name = c('(Intercept)', 'Memory Score', 'Age Bucket (35-50)', 'Age Bucket (>50)')
 
+tab_model(reg_1, show.ci = F, show.stat = T, show.se = T, pred.labels = reg_name, dv.labels = 'Renewal Liklihood^2')
+```
+<br><br>
 Table 5: Linear regression summary results.
+</center>
 
 ```{r, message = F , warning=F, fig.cap="Figure 11: Scatterplot of residuals and fitted values & QQ plot to test constant variance and normality assumptions for the linear regression model."}
 par(mfrow = c(1,2))
